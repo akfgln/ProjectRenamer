@@ -18,19 +18,19 @@ class Program
 
         try
         {
-            // 1. Klasörleri Kopyala
-            Console.WriteLine("Klasör kopyalanıyor (belirtilen dosyalar ve klasörler hariç)...");
+            // Step 1: Copy the source directory to the destination, excluding specific folders
+            Console.WriteLine("Copying project directory (excluding specific folders)...");
             DirectoryCopy(sourcePath, destinationPath, oldName, newName);
 
-            // 2. Proje dosyasını ve klasör içeriğini güncelle
-            Console.WriteLine("Dosya içerikleri ve isimleri güncelleniyor...");
+            // Step 2: Update file contents, filenames, and folder names
+            Console.WriteLine("Updating file contents, filenames, and folder names...");
             UpdateProjectContentAndNames(destinationPath, oldName, newName);
 
-            Console.WriteLine("Proje başarıyla kopyalandı ve yeniden adlandırıldı!");
+            Console.WriteLine("Project successfully copied and renamed!");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Hata: {ex.Message}");
+            Console.WriteLine($"Error: {ex.Message}");
         }
     }
 
@@ -38,15 +38,16 @@ class Program
     {
         DirectoryInfo dir = new DirectoryInfo(sourceDirName);
 
+        // Check if the source directory exists
         if (!dir.Exists)
         {
-            throw new DirectoryNotFoundException($"Kaynak klasör bulunamadı: {sourceDirName}");
+            throw new DirectoryNotFoundException($"Source directory not found: {sourceDirName}");
         }
 
-        // Kopyalamayı başlat
+        // Loop through subdirectories
         foreach (DirectoryInfo subdir in dir.GetDirectories())
         {
-            // Hariç tutulacak klasörler
+            // Skip excluded folders
             if (subdir.Name.Equals(".vs", StringComparison.OrdinalIgnoreCase) ||
                 subdir.Name.Equals(".git", StringComparison.OrdinalIgnoreCase) ||
                 subdir.Name.Equals(".github", StringComparison.OrdinalIgnoreCase) ||
@@ -55,15 +56,16 @@ class Program
                 continue;
             }
 
+            // Replace old name with new name in the subdirectory name
             string newSubdirName = subdir.Name.Replace(oldName, newName);
             string tempPath = Path.Combine(destDirName, newSubdirName);
             Directory.CreateDirectory(tempPath);
 
-            // Alt klasörleri kopyala
+            // Recursively copy subdirectories
             DirectoryCopy(subdir.FullName, tempPath, oldName, newName);
         }
 
-        // Dosyaları kopyala
+        // Copy files in the current directory
         foreach (FileInfo file in dir.GetFiles())
         {
             string newFileName = file.Name.Replace(oldName, newName);
@@ -74,14 +76,15 @@ class Program
 
     private static void UpdateProjectContentAndNames(string directoryPath, string oldName, string newName)
     {
+        // Update file contents and filenames
         foreach (string file in Directory.GetFiles(directoryPath, "*.*", SearchOption.AllDirectories))
         {
-            // Dosya içeriğini güncelle
+            // Replace old name with new name in the file content
             string content = File.ReadAllText(file);
             content = content.Replace(oldName, newName);
             File.WriteAllText(file, content);
 
-            // Dosya adını güncelle
+            // Rename file if it contains the old name
             string fileName = Path.GetFileName(file);
             string newFileName = fileName.Replace(oldName, newName);
             if (fileName != newFileName)
@@ -91,6 +94,7 @@ class Program
             }
         }
 
+        // Update folder names
         foreach (string dir in Directory.GetDirectories(directoryPath, "*", SearchOption.AllDirectories))
         {
             string dirName = Path.GetFileName(dir);
